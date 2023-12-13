@@ -1,0 +1,5 @@
+Pc:ventricle max 84.0
+Vc:ventricle max_diff 1.0
+Vc:ventricle min_diff 1.0
+pressure:ao_valve:aorta max 75.0
+pressure:ao_valve:aorta min 52.0
