@@ -58,7 +58,7 @@
             "bc_type": "RESISTANCE",
             "bc_values": {
                 "Pd": 10.0,
-                "R": 0.7501
+                "R": 3.673576
             }
         }
     ],
@@ -80,8 +80,8 @@
             "vessel_name": "aorta",
             "zero_d_element_type": "BloodVessel",
             "zero_d_element_values": {
-                "C": 0.133,
-                "R_poiseuille": 0.07501
+                "C": 0.579711,
+                "R_poiseuille": 0.008099
             }
         }
     ],
@@ -114,7 +114,7 @@
             "type": "Chamber_Kerckhoffs",
             "name": "ventricle",
             "values": {
-                "Emax": 7.93,
+                "Emax": 7.504618,
                 "Emin": 0.683,
                 "Vrd": 8.5,
                 "Vrs": 7.5,

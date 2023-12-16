@@ -32,7 +32,7 @@ void svZeroD_Chamber::setupModel(LPNSolverInterface& interface){
   this->read_chamber.resize(7);
   this->read_BC.resize(2);
   this->read_Vessel.resize(4);
-  this->all_base.reserve(5);
+  this->all_base.reserve(4);
 
   for (int i = 0; i < this->num_blocks; i++) {
     block_name = this->names[i];
@@ -47,10 +47,9 @@ void svZeroD_Chamber::setupModel(LPNSolverInterface& interface){
     }
   }
   this->all_base[0] = this->read_chamber[0];
-  this->all_base[1] = this->read_chamber[5];
-  this->all_base[2] = this->read_Vessel[0];
-  this->all_base[3] = this->read_Vessel[1];
-  this->all_base[4] = this->read_BC[0];
+  this->all_base[1] = this->read_Vessel[0];
+  this->all_base[2] = this->read_Vessel[1];
+  this->all_base[3] = this->read_BC[0];
   
   // Save solution IDs corresponding to important quantities (Vessel pressure)
   this->P_ids.resize(this->target_vals.size());
@@ -143,7 +142,7 @@ void svZeroD_Chamber::readPerfusionFile(string perfusionFileName)
 // GET NUMBER OF PARAMETERS
 // ========================
 int svZeroD_Chamber::getParameterTotal(){
-  return 5; //Emax, t_twitch, C, Rp, Rd
+  return 4; //Emax, C, Rp, Rd
 }
 
 // ===================================
@@ -217,18 +216,15 @@ void svZeroD_Chamber::getParameterLimits(stdVec& limits){
   //Emax
   limits[0] = 1.0;
   limits[1] = 15.0;
-  //t_twitch
-  limits[2] = 0.1;
-  limits[3] = 0.8;
   //Rp
-  limits[4] = 10.0;
-  limits[5] = 20000.0;
+  limits[2] = 0.0001;
+  limits[3] = 200.0;
   //Vessel C
-  limits[6] = 0.00001;
-  limits[7] = 1.0;
+  limits[4] = 0.00001;
+  limits[5] = 5.0;
   //Rd
-  limits[8] = 10.0;
-  limits[9] = 20000.0;
+  limits[6] = 0.0001;
+  limits[7] = 200.0;
 
 }
 
@@ -249,12 +245,11 @@ void svZeroD_Chamber::setModelParams(LPNSolverInterface& interface, const stdVec
   std::string block_name;
   
   this->read_chamber[0] = params[0];
-  this->read_chamber[5] = params[1];
   
-  this->read_Vessel[0] = params[2];
-  this->read_Vessel[1] = params[3];
+  this->read_Vessel[0] = params[1];
+  this->read_Vessel[1] = params[2];
   
-  this->read_BC[0] = params[4];
+  this->read_BC[0] = params[3];
   
   // Update the model parameters
   for (int i = 0; i < this->num_blocks; i++) {
@@ -292,14 +287,9 @@ void svZeroD_Chamber::postProcess(LPNSolverInterface& interface, const stdVec& t
     if (this->target_name[i] == "mean"){
         value = cmUtils::getMean(totOutputSteps - totalStepsOnSingleCycle - 1, totOutputSteps, outVals[this->P_ids[i]]);
     }
-    if (this->target_name[i] == "max_diff"){
-        v1 = cmUtils::getMax(totOutputSteps - totalStepsOnSingleCycle - 1, totOutputSteps, outVals[this->P_ids[i]]);
-        v2 = cmUtils::getMax(totOutputSteps - 2*totalStepsOnSingleCycle - 1, totOutputSteps - totalStepsOnSingleCycle, outVals[this->P_ids[i]]);
-        value = 1.0 + v1 - v2;
-    }
-    if (this->target_name[i] == "min_diff"){
-        v1 = cmUtils::getMin(totOutputSteps - totalStepsOnSingleCycle - 1, totOutputSteps, outVals[this->P_ids[i]]);
-        v2 = cmUtils::getMin(totOutputSteps - 2*totalStepsOnSingleCycle - 1, totOutputSteps - totalStepsOnSingleCycle, outVals[this->P_ids[i]]);
+    if (this->target_name[i] == "diff"){
+        v1 = outVals[this->P_ids[i]][totOutputSteps - totalStepsOnSingleCycle - 1];
+        v2 = outVals[this->P_ids[i]][totOutputSteps - 2*totalStepsOnSingleCycle - 1];
         value = 1.0 + v1 - v2;
     }
     results[i] = value;
@@ -323,8 +313,8 @@ double svZeroD_Chamber::evalModelError(std::vector<double>& results) {
   for(int i=0; i < resultTotal; i++){
     sq_pct_error = (results[i] - this->target_vals[i])*(results[i] - this->target_vals[i])/(this->target_vals[i]*this->target_vals[i]);
     loss += sq_pct_error;
-    if (this->target_name[i] == "max_diff" || this->target_name[i] == "min_diff"){
-        loss += sq_pct_error*9.0;
+    if (this->target_name[i] == "diff"){
+        loss += sq_pct_error*4.0;
     }
     pct_error += sqrt(sq_pct_error);
     std::cout<<"[evalModelError] results, targets: "<<results[i]<<" "<<this->target_vals[i]<<std::endl;
